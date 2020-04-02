@@ -1,0 +1,273 @@
+{% extends 'base_user.html.twig' %}
+
+{% block stylesheets %}
+    {{parent()}}
+    <style>
+        html{
+            height:100%;
+        }
+        /* Tooltip container */
+        .tooltipcss {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+        }
+        
+        /* Tooltip text */
+        .tooltipcss .tooltiptext {
+            visibility: hidden;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            border-radius: 6px;
+            
+            /* Position the tooltip text - see examples below! */
+            position: absolute;
+            width: 120px;
+            bottom: 100%;
+            left: 50%; 
+            margin-left: -60px; /* Use half of the width (120/2 = 60), to center the tooltip */
+            z-index: 1;
+        }
+        
+        /* Show the tooltip text when you mouse over the tooltip container */
+        .tooltipcss:hover .tooltiptext {
+            visibility: visible;
+        }
+
+        #filterContainer button{
+            margin-bottom:10px;
+        }
+
+        #table_wrapper{
+            width: 100%;
+        }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid h-100">
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-12" style="padding-top:80px;text-align:center;">
+            <div class="row">
+                <div class="col-12">
+                    {% if app.user and "ROLE_ADMIN" in app.user.roles %}
+                        <div class="col-md-2 col-12 btn btn-success" id="btnCreateFruit">
+                            <i class="fa fa-plus"></i> Crear Fruta
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <form id="datatableFilter">
+                        <div class="row" style="margin-top:10px;">
+                            <div class="col-md-2 col-12">
+                                <label>Nombre</label>
+                                <input class="filterInput" name="fruitName" type="text"/>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <table id="table" style="width:100%;" width="100%"></table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{parent()}}
+    <script>
+        var datatable = null;
+        $(document).ready(function() {
+
+            var filterTimeout;
+            $(".filterInput").on("keyup change",function(){
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(function(){
+                    var filters = {};
+                    $(".filterInput").each(function(index, element){
+                        filters[$(element).attr("name")] = $(element).val();
+                    });
+                    datatable.search(JSON.stringify(filters)).draw();
+                },500);
+            });
+
+            {% if app.user and "ROLE_ADMIN" in app.user.roles %}
+                // Eventos de botones
+                $("#btnCreateFruit").click(function(){
+                    Swal.mixin({
+                        input: 'text',
+                        width: 600,
+                        confirmButtonText: 'Continuar',
+                        showCancelButton: true,
+                        progressSteps: ['1']
+                      }).queue([
+                        {
+                            title: 'Nombre',
+                        },
+                      ]).then((result) => {
+                        if (result.value) {
+                            dataToSend = {};
+                            dataToSend.fruitName = result.value[0];
+                            $.ajax({
+                                url: "{{url('api_create_fruit')}}",
+                                type: "POST",
+                                dataType: 'json',
+                                data: dataToSend,
+                                success: function(result){
+                                    if(result.status){
+                                        datatable.ajax.reload( null, false );
+                                        Swal.fire(
+                                            'Creado!',
+                                            'La fruta ha sido creada.',
+                                            'success'
+                                        );
+                                    }else{
+                                        Swal.fire(
+                                            'Algo ha ido mal',
+                                            result.message,
+                                            'error'
+                                        );
+                                    }
+                                },
+                                beforeSend: function(){
+                                    Swal.fire(
+                                        'Espere',
+                                    );
+                                    Swal.showLoading();
+                                },
+                            });
+                        }
+                    });
+                });
+            {% endif %}
+
+            datatable = $('#table').DataTable( {
+                "language": {
+                    "sProcessing":     "Procesando...",
+                    "sLengthMenu":     "Mostrar _MENU_ registros",
+                    "sZeroRecords":    "No se encontraron resultados",
+                    "sEmptyTable":     "Ningún dato disponible en esta tabla",
+                    "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                    "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
+                    "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
+                    "sInfoPostFix":    "",
+                    "sSearch":         "Buscar:",
+                    "sUrl":            "",
+                    "sInfoThousands":  ",",
+                    "sLoadingRecords": "Cargando...",
+                    "oPaginate": {
+                        "sFirst":    "Primero",
+                        "sLast":     "Último",
+                        "sNext":     "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": Activar para ordenar la columna de manera ascendente",
+                        "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                    }
+                },
+                "processing": true,
+                "dom": "tpi",
+                "responsive": true,
+                "autoWidth": false,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{url('api_get_fruits')}}",
+                    "type": "POST",
+                    "dataType": "json",
+                    "data": {
+                        datatable: true
+                    }
+                },
+                drawCallback: function(){
+                    $(".btnDelete").unbind("click");
+                    $(".btnDelete").click(function(){
+                        var name = $(this).attr("data-name");
+                        Swal.fire({
+                            title: '¿Estás seguro?',
+                            text: "La fruta será eliminada.",
+                            type: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#3085d6',
+                            cancelButtonColor: '#d33',
+                            confirmButtonText: 'Sí, eliminar!',
+                            cancelButtonText: 'NO'
+                        }).then((result) => {
+                            if (result.value) {
+                                $.ajax({
+                                    url: "{{url('api_delete_fruit')}}",
+                                    type: "POST",
+                                    dataType: 'json',
+                                    data: {fruitName:name},
+                                    success: function(result){
+                                        if(result.status){
+                                            datatable.ajax.reload( null, false );
+                                            Swal.fire(
+                                                'Eliminada!',
+                                                'La fruta ha sido eliminada.',
+                                                'success'
+                                            );
+                                        }else{
+                                            Swal.fire(
+                                                'Algo ha ido mal',
+                                                result.message,
+                                                'error'
+                                            );
+                                        }
+                                    },
+                                    beforeSend: function(){
+                                        Swal.fire(
+                                            'Espere',
+                                        );
+                                        Swal.showLoading();
+                                    },
+                                });
+                            }
+                        });
+                    });
+                },
+                columns: [
+                    /*
+                    {
+                        title: "Id",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.id;
+                        }
+                    },
+                    */
+                    {
+                        title: "Nombre",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.name;
+                        }
+                    },
+                    {
+                        title: "Acciones",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            var html = "";
+                            html += "<div class='btnAction btnDelete' data-name='"+data.name+"'>";
+                            html += "<i style='color:red;' title='Eliminar' class='fa fa-2x fa-trash'></i>";
+                            html += "</div>";
+                            return html;
+                        }
+                    },
+                ]
+            });
+
+            // Forzamos primer filtro
+            $("#daterange").change();
+
+        });
+    </script>
+{% endblock %}

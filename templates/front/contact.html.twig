@@ -1,0 +1,138 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{parent()}}
+    <style>
+        nav {
+            background-color: white;
+        }
+        section{
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #mainSection{
+            background-image: url("{{asset('media/common/images/bg-min.jpg')}}");
+            background-size: cover;
+            background-position-y: 35%;
+            background-repeat: no-repeat;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<section id="mainSection" style="height:100vh;padding-top:56px;padding-bottom:15px;">
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <div class="col infoBox">
+                    <div class="col">
+                        <h1>Contactar</h1>
+                    </div>
+                    <div class="col-12">
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+    {{parent()}}
+    <script>
+        $(document).ready(function(){
+            // Botón de envío de correo
+            $("#sendMail").click(function(e){
+                e.preventDefault();
+                if(checkMailForm()){
+                    Swal.fire({
+                        type: "error",
+                        title: "Funcionalidad no disponible"
+                    });
+                    {#
+                    var toSend = {
+                        name: $("#name").val(),
+                        email: $("#email").val(),
+                        content: $("#contentEmail").val(),
+                    };
+                    $.ajax({
+                        url: "{{url('sendMail')}}",
+                        type: "POST",
+                        dataType: 'json',
+                        data: toSend,
+                        success: function(result){
+                            if(result.status){
+                                Swal.fire(
+                                    'Hecho!',
+                                    'El mensaje ha sido enviado.',
+                                    'success'
+                                );
+                                setTimeout(function(){
+                                    var link = "<a href='{{url('homepage')}}' id='temporalLink'></a>";
+                                    $("body").append(link);
+                                    $("#temporalLink")[0].click();
+                                },1000);
+                            }else{
+                                Swal.fire(
+                                    'Algo ha ido mal',
+                                    result.message,
+                                    'error'
+                                );
+                            }
+                        },
+                        beforeSend: function(){
+                            Swal.fire(
+                                'Espere, enviando mensaje...',
+                            );
+                            Swal.showLoading();
+                        },
+                    });
+                    #}
+                }
+            });
+            // Función que comprueba el formulario
+            function checkMailForm(){
+                var result = true;
+
+                var errors = "";
+
+                if($("#email").val() && validateEmail($("#email").val())){
+                    // Email correcto
+                }else{
+                    // Email incorrecto
+                    errors += "Error en el email.";
+                    result = false;
+                }
+
+                if(!$("#name").val()){
+                    // Error en el nombre
+                    errors += "Error en el nombre.";
+                    result = false;
+                }
+
+                if(!$("#contentEmail").val()){
+                    // Error en el contenido del email
+                    errors += "Error en el mensaje";
+                    result = false;
+                }
+
+                if(!result){
+                    Swal.fire({
+                        title: "Errores",
+                        type: "error",
+                        text: errors 
+                    });
+                }
+
+                return result;
+            }
+            // Función que valida el email
+            function validateEmail(email) {
+                var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                return re.test(String(email).toLowerCase());
+            }
+        });
+    </script>
+{% endblock %}

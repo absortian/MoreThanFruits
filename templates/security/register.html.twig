@@ -1,0 +1,57 @@
+{% extends 'base_login.html.twig' %}
+
+{% block stylesheets %}
+    {{parent()}}
+    <style>
+        html{
+            height:100%;
+            font-size:12px;
+        }
+        body.login-body{
+            height:100%;
+            padding-top:20px;
+        }
+        body{
+            /*background-color: rgb(39, 39, 39);*/
+            background-image: linear-gradient(#002A36, #016A87);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid h-100">
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col col-sm-6 col-md-6 col-lg-4 col-xl-3" style="margin-top:40px;">
+            <form method="post">
+                <center>
+                    <a href="{{url('homepage')}}">
+                        <img src="{{asset('media/common/logo/logo.svg')}}" alt="logo" style="width:200px;height:280px;margin:0px auto;"/>
+                    </a>
+                </center>
+                <br>
+                <div class="form-group">
+                    <input type="email" value="" name="email" id="inputEmail" class="form-control form-control-lg" placeholder="Email" required autofocus>
+                    {% if errorUser is defined and errorUser %}
+                        <label style="color:black;"><i class="fa fa-exclamation-circle                            "></i> El usuario ya existe.</label>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" id="inputPassword" class="form-control form-control-lg" placeholder="Contraseña" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" name="passwordTwo" id="inputPasswordTwo" class="form-control form-control-lg" placeholder="Repite Contraseña" required>
+                </div>
+                <div class="form-group">
+                    {% if errorPassword is defined and errorPassword %}
+                        <label style="color:black;"><i class="fa fa-exclamation-circle                            "></i> Contraseña no coincide.</label>
+                    {% endif %}
+                    <button class="btn btn-register btn-lg btn-block">Registrarse</button>
+                </div>
+                <div class="form-group">
+                    <button id="aLogin" class="btn btn-login btn-lg btn-block">Iniciar Sesión</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

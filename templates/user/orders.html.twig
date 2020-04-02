@@ -1,0 +1,417 @@
+{% extends 'base_user.html.twig' %}
+
+{% block stylesheets %}
+    {{parent()}}
+    <style>
+        html{
+            height:100%;
+        }
+        /* Tooltip container */
+        .tooltipcss {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black; /* If you want dots under the hoverable text */
+        }
+        
+        /* Tooltip text */
+        .tooltipcss .tooltiptext {
+            visibility: hidden;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            border-radius: 6px;
+            
+            /* Position the tooltip text - see examples below! */
+            position: absolute;
+            width: 120px;
+            bottom: 100%;
+            left: 50%; 
+            margin-left: -60px; /* Use half of the width (120/2 = 60), to center the tooltip */
+            z-index: 1;
+        }
+        
+        /* Show the tooltip text when you mouse over the tooltip container */
+        .tooltipcss:hover .tooltiptext {
+            visibility: visible;
+        }
+
+        #filterContainer button{
+            margin-bottom:10px;
+        }
+
+        #table_wrapper{
+            width: 100%;
+        }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid h-100">
+    <div class="row justify-content-center align-items-center h-100">
+        <div class="col-12" style="padding-top:80px;text-align:center;">
+            <div class="row">
+                <div class="col-12">
+                    {% if app.user and "ROLE_ADMIN" in app.user.roles %}
+                        <div class="col-md-2 col-12 btn btn-success" id="btnCreateOrder">
+                            <i class="fa fa-plus"></i> Crear Pedido
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-12">
+                    <form id="datatableFilter">
+                        <div class="row" style="margin-top:10px;">
+                            <div class="col-md-2 col-12">
+                                <label>F. Creación</label>
+                                <input id="daterange" class="filterInput" name="creationDate" type="text"/>
+                            </div>
+                            <div class="col-md-2 col-12">
+                                <label>N. Proveedor</label>
+                                <input class="filterInput" name="providerName" type="text"/>
+                            </div>
+                            <div class="col-md-2 col-12">
+                                <label>ID Proveedor</label>
+                                <input class="filterInput" name="providerId" type="text"/>
+                            </div>
+                            <div class="col-md-2 col-12">
+                                <label>Código País</label>
+                                <input class="filterInput" name="countryCode" type="text"/>
+                            </div>
+                            <div class="col-md-2 col-12">
+                                <label>Teléfono</label>
+                                <input class="filterInput" name="phone" type="text"/>
+                            </div>
+                            <div class="col-md-2 col-12">
+                                <label>Fruta</label>
+                                <input class="filterInput" name="fruitName" type="text"/>
+                            </div>
+                            <div class="col-md-2 col-12">
+                                <label>Cantidad</label>
+                                <input class="filterInput" name="amount" type="text"/>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <table id="table" style="width:100%;" width="100%"></table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{parent()}}
+    <script>
+        var datatable = null;
+        $(document).ready(function() {
+
+            var locale = {
+                format: 'DD/MM/YYYY',
+                applyLabel: "{% trans %}daterange.accept{% endtrans %}",
+                cancelLabel: "{% trans %}daterange.cancel{% endtrans %}",
+                fromLabel: "{% trans %}daterange.from{% endtrans %}",
+                toLabel: "{% trans %}daterange.to{% endtrans %}",
+                customRangeLabel: "{% trans %}daterange.customRange{% endtrans %}",
+                daysOfWeek: [
+                    "{% trans %}daterange.lun{% endtrans %}",
+                    "{% trans %}daterange.mar{% endtrans %}",
+                    "{% trans %}daterange.mie{% endtrans %}",
+                    "{% trans %}daterange.jue{% endtrans %}",
+                    "{% trans %}daterange.vie{% endtrans %}",
+                    "{% trans %}daterange.sab{% endtrans %}",
+                    "{% trans %}daterange.dom{% endtrans %}",
+                ],
+                monthNames: [
+                    "{% trans %}daterange.enero{% endtrans %}",
+                    "{% trans %}daterange.febrero{% endtrans %}",
+                    "{% trans %}daterange.marzo{% endtrans %}",
+                    "{% trans %}daterange.abril{% endtrans %}",
+                    "{% trans %}daterange.mayo{% endtrans %}",
+                    "{% trans %}daterange.junio{% endtrans %}",
+                    "{% trans %}daterange.julio{% endtrans %}",
+                    "{% trans %}daterange.agosto{% endtrans %}",
+                    "{% trans %}daterange.septiembre{% endtrans %}",
+                    "{% trans %}daterange.octubre{% endtrans %}",
+                    "{% trans %}daterange.noviembre{% endtrans %}",
+                    "{% trans %}daterange.diciembre{% endtrans %}",
+                ],
+            };
+
+            //DATERANGE
+            var start = moment().subtract(15, 'days');
+            var end = moment();
+            $('#daterange').daterangepicker({
+                startDate: start,
+                endDate: end,
+                locale: locale,
+                ranges: {
+                    "{% trans %}daterange.hoy{% endtrans %}": [moment(), moment()],
+                    "{% trans %}daterange.ayer{% endtrans %}": [moment().add(-1, 'days'), moment().add(-1, 'days')],
+                    "{% trans %}daterange.last7{% endtrans %}": [moment().subtract(6, 'days'), moment()],
+                    "{% trans %}daterange.mes{% endtrans %}": [moment().startOf('month'), moment().endOf('month')],
+                    "{% trans %}daterange.mesOld{% endtrans %}": [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+                    "{% trans %}daterange.year{% endtrans %}": [moment().startOf('year'), moment().endOf('year')],
+                    "{% trans %}daterange.yearOld{% endtrans %}": [moment().subtract(1, 'year').startOf('year'), moment().subtract(1, 'year').endOf('year')]
+                },
+            });
+
+            var filterTimeout;
+            $(".filterInput").on("keyup change",function(){
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(function(){
+                    var filters = {};
+                    $(".filterInput").each(function(index, element){
+                        if($(element).attr("id") != "daterange"){
+                            filters[$(element).attr("name")] = $(element).val();
+                        }else{
+                            filters["startDate"] = new Date($(element).data('daterangepicker').startDate._d).toLocaleDateString('es-ES');
+                            filters["endDate"] = new Date($(element).data('daterangepicker').endDate._d).toLocaleDateString('es-ES');
+                        }
+                    });
+                    datatable.search(JSON.stringify(filters)).draw();
+                },500);
+            });
+
+            {% if app.user and "ROLE_ADMIN" in app.user.roles %}
+                // Eventos de botones
+                $("#btnCreateOrder").click(function(){
+
+                    $.ajax({
+                        url: "{{url('api_get_fruits')}}",
+                        type: "POST",
+                        dataType: 'json',
+                        data: {},
+                        success: function(result){
+                            if(result.status){
+                                if(result.data.length > 0){
+                                    var options = {};
+                                    result.data.map(function(eachData){
+                                        options[eachData.name] = eachData.name;
+                                    });
+                                    Swal.mixin({
+                                        input: 'text',
+                                        width: 600,
+                                        confirmButtonText: 'Continuar',
+                                        showCancelButton: true,
+                                        progressSteps: ['1', '2','3','4','5','6']
+                                      }).queue([
+                                        {
+                                            title: 'Nombre Proveedor',
+                                        },
+                                        {
+                                            title: 'Código País',
+                                        },
+                                        {
+                                            title: 'Teléfono',
+                                        },
+                                        {
+                                            title: 'CIF Proveedor',
+                                        },
+                                        {
+                                            title: 'Fruta',
+                                            input: "select",
+                                            inputOptions: options
+                                        },
+                                        {
+                                            title: 'Cantidad',
+                                            input: 'number'
+                                        },
+                                      ]).then((result) => {
+                                        if (result.value) {
+                                            dataToSend = {};
+                                            dataToSend.providerName = result.value[0];
+                                            dataToSend.countryCode = result.value[1];
+                                            dataToSend.phone = result.value[2];
+                                            dataToSend.providerId = result.value[3];
+                                            dataToSend.fruitName = result.value[4];
+                                            dataToSend.amount = result.value[5];
+                                            $.ajax({
+                                                url: "{{url('api_create_order')}}",
+                                                type: "POST",
+                                                dataType: 'json',
+                                                data: dataToSend,
+                                                success: function(result){
+                                                    if(result.status){
+                                                        datatable.ajax.reload( null, false );
+                                                        Swal.fire(
+                                                            'Creado!',
+                                                            'El pedido ha sido creado.',
+                                                            'success'
+                                                        );
+                                                    }else{
+                                                        Swal.fire(
+                                                            'Algo ha ido mal',
+                                                            result.message,
+                                                            'error'
+                                                        );
+                                                    }
+                                                },
+                                                beforeSend: function(){
+                                                    Swal.fire(
+                                                        'Espere',
+                                                    );
+                                                    Swal.showLoading();
+                                                },
+                                            });
+                                        }
+                                    });
+                                }else{
+                                    Swal.fire(
+                                        'No se puede crear un pedido.',
+                                        "No hay frutas en la plataforma.",
+                                        'error'
+                                    );
+                                }
+                            }else{
+                                Swal.fire(
+                                    'Algo ha ido mal',
+                                    result.message,
+                                    'error'
+                                );
+                            }
+                        },
+                        beforeSend: function(){
+                            Swal.fire(
+                                'Espere',
+                            );
+                            Swal.showLoading();
+                        },
+                    });
+                });
+            {% endif %}
+
+            datatable = $('#table').DataTable( {
+                "language": {
+                    "sProcessing":     "Procesando...",
+                    "sLengthMenu":     "Mostrar _MENU_ registros",
+                    "sZeroRecords":    "No se encontraron resultados",
+                    "sEmptyTable":     "Ningún dato disponible en esta tabla",
+                    "sInfo":           "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+                    "sInfoEmpty":      "Mostrando registros del 0 al 0 de un total de 0 registros",
+                    "sInfoFiltered":   "(filtrado de un total de _MAX_ registros)",
+                    "sInfoPostFix":    "",
+                    "sSearch":         "Buscar:",
+                    "sUrl":            "",
+                    "sInfoThousands":  ",",
+                    "sLoadingRecords": "Cargando...",
+                    "oPaginate": {
+                        "sFirst":    "Primero",
+                        "sLast":     "Último",
+                        "sNext":     "Siguiente",
+                        "sPrevious": "Anterior"
+                    },
+                    "oAria": {
+                        "sSortAscending":  ": Activar para ordenar la columna de manera ascendente",
+                        "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+                    }
+                },
+                "processing": true,
+                "dom": "tpi",
+                "responsive": true,
+                "autoWidth": false,
+                "serverSide": true,
+                "ajax": {
+                    "url": "{{url('api_get_orders')}}",
+                    "type": "POST",
+                    "dataType": "json",
+                    "data": {
+                        datatable: true
+                    }
+                },
+                drawCallback: function(){
+                    
+                },
+                columns: [
+                    /*
+                    {
+                        title: "Id",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.id;
+                        }
+                    },
+                    */
+                    {
+                        title: "Fecha Creación",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            date = new Date(data.creationDate.date);
+                            return date.toLocaleString("es-es");
+                        }
+                    },
+                    {
+                        title: "N. Proveedor",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.providerName;
+                        }
+                    },
+                    {
+                        title: "Id Proveedor",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.providerId;
+                        }
+                    },
+                    {
+                        title: "C. País",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.countryCode;
+                        }
+                    },
+                    {
+                        title: "Teléfono",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.phone;
+                        }
+                    },
+                    {
+                        title: "Fruta",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.fruitName;
+                        }
+                    },
+                    {
+                        title: "Cantidad",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            return data.amount;
+                        }
+                    },
+                    /*
+                    {
+                        title: "Acciones",
+                        orderable: false,
+                        data: null,
+                        render: function(data){
+                            var html = "";
+                            html += "<div class='btnAction btnDelete' data-token='"+data.id+"'>";
+                            html += "<i style='color:red;' title='Eliminar' class='fa fa-2x fa-trash'></i>";
+                            html += "</div>";
+                            return html;
+                        }
+                    },
+                    */
+                ]
+            });
+
+            // Forzamos primer filtro
+            $("#daterange").change();
+
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+        <meta name="robots" content="noindex">
+        <meta name="googlebot" content="noindex">
+        <link rel="shortcut icon" href="{{asset('media/common/logo/favicon.png')}}" />
+        <title>
+            {% block title %}
+                {{sitename}}
+            {% endblock %}
+        </title>
+        {% block stylesheets %}
+            <link href="https://fonts.googleapis.com/css?family=Rubik" rel="stylesheet">
+            <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+            <style>
+                *{
+                    font-family: "Rubik";
+                }
+                .btn-login{
+                    background-color: grey!important;
+                    border-color: grey!important;
+                    color:white;
+                    /*font-weight: bold!important;*/
+                }
+                .btn-register{
+                    background-color: #56959A!important;
+                    border-color: #56959A!important;
+                    color:white;
+                    /*font-weight: bold!important;*/
+                }
+            </style>
+            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+        {% endblock %}
+    </head>
+    <body>
+        {% block body %}
+        {% endblock %}
+        {% block javascripts %}
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+            <script>
+                $(document).ready(function(){
+                    {#
+                    $("#aRegister").click(function(e){
+                        e.preventDefault();
+                        var url = "{{url('user_register')}}";
+                        var link = "<a id='temporalLink' href='"+url+"'></a>";
+                        $("body").append(link);
+                        $("#temporalLink")[0].click();
+                    });
+                    #}
+                    $("#aLogin").click(function(e){
+                        e.preventDefault();
+                        var url = "{{url('user_login')}}";
+                        var link = "<a id='temporalLink' href='"+url+"'></a>";
+                        $("body").append(link);
+                        $("#temporalLink")[0].click();
+                    });
+                });
+            </script>
+        {% endblock %}
+    </body>
+</html>
