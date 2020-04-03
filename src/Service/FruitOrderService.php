@@ -31,7 +31,7 @@ class FruitOrderService extends AbstractController
                 if(isset($phone) && is_string($phone) && !empty($phone)){
                     if(isset($providerId) && is_string($providerId) && !empty($providerId)){
                         if(isset($fruitName) && is_string($fruitName) && !empty($fruitName)){
-                            if(isset($amount) && is_numeric($amount)){
+                            if(isset($amount) && is_numeric($amount) && $amount > 0){
 
                                 $em = $this->getDoctrine()->getManager();
 
